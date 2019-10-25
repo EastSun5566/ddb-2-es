@@ -5,12 +5,12 @@ export default {
   input: 'src/index.ts',
   output: {
     file: 'dist/index.js',
-    format: 'umd'
+    format: 'umd',
   },
   plugins: [
     resolve(),
     babel({
-      exclude: 'node_modules/**' // only transpile our source code
-    })
-  ]
+      exclude: 'node_modules/**', // only transpile our source code
+    }),
+  ],
 };
