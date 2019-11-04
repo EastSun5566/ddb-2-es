@@ -1,9 +1,9 @@
 import { Client, ClientOptions } from '@elastic/elasticsearch';
 import connector from 'aws-elasticsearch-connector';
 
-export const es = (opts: ClientOptions): Client => new Client({
+export const createESClient = (options: ClientOptions): Client => new Client({
   Connection: connector,
-  ...opts,
+  ...options,
 });
 
-export default es;
+export default createESClient;
