@@ -1,8 +1,5 @@
-/* eslint-disable no-useless-catch */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable no-await-in-loop */
-// eslint-disable-next-line import/no-unresolved
-import { Converter } from 'aws-sdk/clients/dynamodb';
+import dynamodb from 'aws-sdk/clients/dynamodb';
+import { RequestParams } from '@elastic/elasticsearch';
 
 import { DDB2ESParam } from './interfaces';
 import { createESClient } from './utils/es';
@@ -10,32 +7,47 @@ import { createESClient } from './utils/es';
 export const ddb2es = async ({
   ddbStreamEvent,
   esOptions,
+  bulkOptions,
   forEachRecordToDocument,
 }: DDB2ESParam): Promise<void> => {
   const es = createESClient(esOptions);
 
-  for (const record of ddbStreamEvent.Records) {
-    const keys = Converter.unmarshall(record.dynamodb.Keys);
+  const bulkParam: RequestParams.Bulk = {
+    body: ddbStreamEvent.Records
+      .flatMap((record) => {
+        const keys = dynamodb.Converter.unmarshall(record.dynamodb.Keys);
 
-    const {
-      id = Object.values(keys).join(''),
-      index = record.eventSourceARN.split('/')[1].toLowerCase(),
-      ...resParam
-    } = forEachRecordToDocument(record) || {};
+        const {
+          id = Object.values(keys).join(''),
+          index = record.eventSourceARN.split('/')[1].toLowerCase(),
+        } = forEachRecordToDocument(record) || {};
 
+        if (record.eventName === 'REMOVE') {
+          return [
+            {
+              delete: {
+                _index: index,
+                _id: id,
+              },
+            },
+          ];
+        }
 
-    if (record.eventName === 'REMOVE') {
-      await es.delete({ index, id, ...resParam });
-      return;
-    }
+        return [
+          {
+            index: {
+              _index: index,
+              _id: id,
+            },
+          },
+          dynamodb.Converter.unmarshall(record.dynamodb.NewImage),
+        ];
+      }),
+    ...bulkOptions,
+  };
 
-    await es.index({
-      index,
-      id,
-      body: Converter.unmarshall(record.dynamodb.NewImage),
-      ...resParam,
-    });
-  }
+  const { body: bulkResponse } = await es.bulk(bulkParam);
+  if (bulkResponse.errors) throw new Error(bulkResponse.errors);
 };
 
 export default ddb2es;

@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "declarationDir": "dist/types",
+    "declaration": true,
+    "target": "esnext",
+    "module": "esnext"
+    // "strict": true
+  },
+  "lib": ["esnext"],
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
