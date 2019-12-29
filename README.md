@@ -32,7 +32,7 @@ export const ddb2es: DynamoDBStreamHandler = async event => {
       esOptions: { node: `https://${ES_DOMAIN}` },
 
       // ES index is optional, default is DDB table name
-      // (ES id also optional, default is DDB table Keys join)
+      // (ES id is also optional, default is DDB table Keys join)
       forEachRecordToDocument: () => ({ index: ES_INDEX })
     });
   } catch (err) {
