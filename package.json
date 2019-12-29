@@ -1,25 +1,61 @@
 {
   "name": "ddb-2-es",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.0",
+  "description": "🚚 A Typescript implement DynamoDB to Elasticsearch in Lambda with latest ES client Bulk API",
   "main": "dist/index.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "rollup -c"
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "npm run type-check --watch",
+    "build:types": "tsc --emitDeclarationOnly",
+    "build:js": "rollup -c",
+    "build": "npm run build:types && npm run build:js",
+    "lint": "eslint --fix --ignore-path .gitignore --ext .js,.ts src/",
+    "release": "npm version patch && git push --follow-tags"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "dynamodb",
+    "streams",
+    "elasticsearch",
+    "bulk",
+    "typescript"
+  ],
+  "author": "汪東陽 EastSun5566",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EastSun5566/ddb-2-es"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn lint"
+    }
+  },
   "devDependencies": {
     "@babel/core": "^7.6.4",
     "@babel/preset-env": "^7.6.3",
+    "@babel/preset-typescript": "^7.7.2",
+    "@types/aws-lambda": "^8.10.33",
     "@typescript-eslint/eslint-plugin": "^2.5.0",
     "@typescript-eslint/parser": "^2.5.0",
     "eslint": "^6.5.1",
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-plugin-import": "^2.18.2",
+    "husky": "^3.1.0",
     "rollup": "^1.25.2",
     "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^5.2.0",
-    "typescript": "^3.6.4"
+    "rollup-plugin-terser": "^5.1.2",
+    "typescript": "^3.7.4"
+  },
+  "dependencies": {
+    "@elastic/elasticsearch": "^7.4.0",
+    "aws-elasticsearch-connector": "^8.2.0",
+    "aws-sdk": "^2.556.0"
   }
 }

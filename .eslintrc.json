@@ -3,7 +3,11 @@
     "es6": true,
     "node": true
   },
-  "extends": ["airbnb-base", "plugin:@typescript-eslint/recommended"],
+  "extends": [
+    "airbnb-base",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/typescript"
+  ],
   "globals": {
     "Atomics": "readonly",
     "SharedArrayBuffer": "readonly"
@@ -14,5 +18,7 @@
     "sourceType": "module"
   },
   "plugins": ["@typescript-eslint"],
-  "rules": {}
+  "rules": {
+    "import/extensions": "off"
+  }
 }

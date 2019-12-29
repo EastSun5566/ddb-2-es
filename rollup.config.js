@@ -1,16 +1,28 @@
 import resolve from 'rollup-plugin-node-resolve';
+import commonjs from 'rollup-plugin-commonjs';
+import json from 'rollup-plugin-json';
 import babel from 'rollup-plugin-babel';
+import { terser } from 'rollup-plugin-terser';
+
+import pkg from './package.json';
+
+const extensions = ['.js', '.ts'];
 
 export default {
   input: 'src/index.ts',
   output: {
-    file: 'dist/index.js',
+    name: 'ddb-2-es',
+    file: pkg.main,
     format: 'umd',
   },
   plugins: [
-    resolve(),
+    resolve({ extensions }),
+    commonjs(),
+    json(),
     babel({
-      exclude: 'node_modules/**', // only transpile our source code
+      extensions,
+      include: 'src/**/*',
     }),
+    terser(),
   ],
 };
