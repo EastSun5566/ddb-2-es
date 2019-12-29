@@ -1,7 +1,7 @@
 import dynamodb from 'aws-sdk/clients/dynamodb';
-import { RequestParams } from '@elastic/elasticsearch';
+import { DynamoDBStreamEvent, DynamoDBRecord } from 'aws-lambda';
+import { ClientOptions, RequestParams } from '@elastic/elasticsearch';
 
-import { DDB2ESParam } from './interfaces';
 import { createESClient } from './utils/es';
 
 export const ddb2es = async ({
@@ -51,3 +51,10 @@ export const ddb2es = async ({
 };
 
 export default ddb2es;
+
+interface DDB2ESParam {
+  ddbStreamEvent: DynamoDBStreamEvent;
+  esOptions: ClientOptions;
+  bulkOptions: RequestParams.Bulk;
+  forEachRecordToDocument: (record?: DynamoDBRecord) => { index: string; id: string };
+}
