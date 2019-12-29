@@ -1,4 +1,5 @@
 import dynamodb from 'aws-sdk/clients/dynamodb';
+// eslint-disable-next-line import/no-unresolved
 import { DynamoDBStreamEvent, DynamoDBRecord } from 'aws-lambda';
 import { ClientOptions, RequestParams } from '@elastic/elasticsearch';
 
