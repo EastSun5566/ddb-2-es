@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "strict": true,
+    "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
     "declarationDir": "dist/types",
-    "declaration": true,
-    "target": "esnext",
-    "module": "esnext"
-    // "strict": true
+    "declaration": true
   },
   "lib": ["esnext"],
   "include": ["src/**/*"],
