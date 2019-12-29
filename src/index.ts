@@ -15,11 +15,11 @@ export const ddb2es = async ({
   const bulkParam: RequestParams.Bulk = {
     body: ddbStreamEvent.Records
       .flatMap((record) => {
-        const keys = dynamodb.Converter.unmarshall(record.dynamodb.Keys);
+        const keys = dynamodb.Converter.unmarshall((record.dynamodb && record.dynamodb.Keys) || {});
 
         const {
           id = Object.values(keys).join(''),
-          index = record.eventSourceARN.split('/')[1].toLowerCase(),
+          index = record.eventSourceARN && record.eventSourceARN.split('/')[1].toLowerCase(),
         } = forEachRecordToDocument(record) || {};
 
         if (record.eventName === 'REMOVE') {
@@ -40,7 +40,7 @@ export const ddb2es = async ({
               _id: id,
             },
           },
-          dynamodb.Converter.unmarshall(record.dynamodb.NewImage),
+          dynamodb.Converter.unmarshall((record.dynamodb && record.dynamodb.NewImage) || {}),
         ];
       }),
     ...bulkOptions,
