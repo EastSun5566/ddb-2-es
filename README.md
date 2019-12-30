@@ -2,6 +2,8 @@
 
 > 🚚 A Typescript implement DynamoDB to Elasticsearch in Lambda with latest ES client Bulk API
 
+[![npm](https://img.shields.io/npm/v/ddb-2-es.svg)](https://www.npmjs.com/package/ddb-2-es)
+
 ## ✨ Install
 
 ```sh
