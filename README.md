@@ -1,6 +1,6 @@
 # DynamoDB To Elasticsearch
 
-> 🚚 A Typescript implement DynamoDB to Elasticsearch in Lambda with latest ES client Bulk API
+> 🚚 Load Streaming Data into Amazon ES from DynamoDB by Lambda with latest ES Bulk API
 
 [![npm](https://img.shields.io/npm/v/ddb-2-es.svg)](https://www.npmjs.com/package/ddb-2-es)
 
