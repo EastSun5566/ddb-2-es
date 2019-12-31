@@ -1,7 +1,7 @@
 {
   "name": "ddb-2-es",
   "version": "0.0.2",
-  "description": "🚚 A Typescript implement DynamoDB to Elasticsearch in Lambda with latest ES client Bulk API",
+  "description": "🚚 Load Streaming Data into Amazon ES from DynamoDB by Lambda with latest ES Bulk API",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
   "files": [
