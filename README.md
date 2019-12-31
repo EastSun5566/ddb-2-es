@@ -1,6 +1,6 @@
 # DynamoDB To Elasticsearch
 
-> 🚚 Load Streaming Data into Amazon ES from DynamoDB by Lambda with latest ES Bulk API
+> 🚚 Load streaming data into Amazon ES from DynamoDB by Lambda with latest ES bulk API
 
 [![npm](https://img.shields.io/npm/v/ddb-2-es.svg)](https://www.npmjs.com/package/ddb-2-es)
 

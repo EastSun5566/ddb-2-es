@@ -1,7 +1,7 @@
 {
   "name": "ddb-2-es",
   "version": "0.0.2",
-  "description": "🚚 Load Streaming Data into Amazon ES from DynamoDB by Lambda with latest ES Bulk API",
+  "description": "🚚 Load streaming data into Amazon ES from DynamoDB by Lambda with latest ES bulk API",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
   "files": [
