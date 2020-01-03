@@ -21,7 +21,7 @@ export const ddb2es = async ({
         const {
           id = Object.values(keys).join(''),
           index = record.eventSourceARN && record.eventSourceARN.split('/')[1].toLowerCase(),
-        } = forEachRecordToDocument(record) || {};
+        } = (forEachRecordToDocument && forEachRecordToDocument(record)) || {};
 
         if (record.eventName === 'REMOVE') {
           return [
@@ -56,6 +56,6 @@ export default ddb2es;
 interface DDB2ESParam {
   ddbStreamEvent: DynamoDBStreamEvent;
   esOptions: ClientOptions;
-  bulkOptions: RequestParams.Bulk;
-  forEachRecordToDocument: (record?: DynamoDBRecord) => { index: string; id: string };
+  bulkOptions?: RequestParams.Bulk;
+  forEachRecordToDocument?: (record: DynamoDBRecord) => { index: string; id: string };
 }
