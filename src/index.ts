@@ -3,7 +3,7 @@ import dynamodb from 'aws-sdk/clients/dynamodb';
 import { DynamoDBStreamEvent, DynamoDBRecord } from 'aws-lambda';
 import { ClientOptions, RequestParams } from '@elastic/elasticsearch';
 
-import { createESClient } from './utils/es';
+import { createESClient } from './es';
 
 export const ddb2es = async ({
   ddbStreamEvent,
