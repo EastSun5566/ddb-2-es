@@ -3,7 +3,7 @@ import dynamodb from 'aws-sdk/clients/dynamodb';
 import { DynamoDBStreamEvent, DynamoDBRecord } from 'aws-lambda';
 import { ClientOptions, RequestParams } from '@elastic/elasticsearch';
 
-import { createESClient } from './utils/es';
+import { createESClient } from './es';
 
 export const ddb2es = async ({
   ddbStreamEvent,
@@ -21,7 +21,7 @@ export const ddb2es = async ({
         const {
           id = Object.values(keys).join(''),
           index = record.eventSourceARN && record.eventSourceARN.split('/')[1].toLowerCase(),
-        } = forEachRecordToDocument(record) || {};
+        } = (forEachRecordToDocument && forEachRecordToDocument(record)) || {};
 
         if (record.eventName === 'REMOVE') {
           return [
@@ -56,6 +56,6 @@ export default ddb2es;
 interface DDB2ESParam {
   ddbStreamEvent: DynamoDBStreamEvent;
   esOptions: ClientOptions;
-  bulkOptions: RequestParams.Bulk;
-  forEachRecordToDocument: (record?: DynamoDBRecord) => { index: string; id: string };
+  bulkOptions?: RequestParams.Bulk;
+  forEachRecordToDocument?: (record: DynamoDBRecord) => { index: string; id: string };
 }
