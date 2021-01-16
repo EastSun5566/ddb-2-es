@@ -1,6 +1,6 @@
 import { Client as ESClient, ClientOptions } from '@elastic/elasticsearch';
 import { Config as AWSConfig } from 'aws-sdk';
-// eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import createAwsElasticsearchConnector from 'aws-elasticsearch-connector';
 
