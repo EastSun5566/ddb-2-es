@@ -5,19 +5,25 @@ import { ClientOptions, RequestParams } from '@elastic/elasticsearch';
 
 import { createESClient } from './es';
 
+interface DDB2ESOptions {
+  ddbStreamEvent: DynamoDBStreamEvent;
+  esOptions: ClientOptions;
+  bulkOptions?: RequestParams.Bulk;
+  forEachRecordToDocument?: (record: DynamoDBRecord) => { index: string; id: string };
+}
+
 export const ddb2es = async ({
   ddbStreamEvent,
   esOptions,
   bulkOptions,
   forEachRecordToDocument,
-}: DDB2ESParam): Promise<void> => {
+}: DDB2ESOptions): Promise<void> => {
   const es = createESClient(esOptions);
 
   const bulkParam: RequestParams.Bulk = {
     body: ddbStreamEvent.Records
       .flatMap((record) => {
         const keys = dynamodb.Converter.unmarshall((record.dynamodb && record.dynamodb.Keys) || {});
-
         const {
           id = Object.values(keys).join(''),
           index = record.eventSourceARN && record.eventSourceARN.split('/')[1].toLowerCase(),
@@ -52,10 +58,3 @@ export const ddb2es = async ({
 };
 
 export default ddb2es;
-
-interface DDB2ESParam {
-  ddbStreamEvent: DynamoDBStreamEvent;
-  esOptions: ClientOptions;
-  bulkOptions?: RequestParams.Bulk;
-  forEachRecordToDocument?: (record: DynamoDBRecord) => { index: string; id: string };
-}
