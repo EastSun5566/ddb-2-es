@@ -1,10 +1,11 @@
 import { Client as ESClient, ClientOptions } from '@elastic/elasticsearch';
+import { Config as AWSConfig } from 'aws-sdk';
 // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
 // @ts-ignore
-import connector from 'aws-elasticsearch-connector';
+import createAwsElasticsearchConnector from 'aws-elasticsearch-connector';
 
 export const createESClient = (options: ClientOptions): ESClient => new ESClient({
-  Connection: connector,
+  ...createAwsElasticsearchConnector(AWSConfig),
   ...options,
 });
 
