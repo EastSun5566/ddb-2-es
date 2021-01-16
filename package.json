@@ -1,6 +1,6 @@
 {
   "name": "ddb-2-es",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "🚚 Load streaming data into Amazon ES from DynamoDB by Lambda with latest ES bulk API",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
@@ -12,7 +12,7 @@
     "build": "tsc",
     "lint": "eslint --fix --ignore-path .gitignore --ext .js,.ts src",
     "prepublishOnly": "tsc",
-    "release": "yarn version patch && git push --follow-tags && yarn publish"
+    "release": "yarn version && git push --follow-tags && yarn publish"
   },
   "keywords": [
     "dynamodb",
