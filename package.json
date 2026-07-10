@@ -9,7 +9,7 @@
     "src"
   ],
   "engines": {
-    "node": ">=22"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "build": "tsc",
