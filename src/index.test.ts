@@ -1,3 +1,4 @@
+/* eslint-disable import/no-unresolved, @typescript-eslint/no-explicit-any */
 import { before, test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import type { DynamoDBStreamEvent } from 'aws-lambda';
@@ -6,15 +7,15 @@ const mockBulk = mock.fn(async () => ({ body: { errors: false } }));
 
 // Mock ./es before ./index is loaded so createESClient is replaced
 mock.module('./es', {
-  exports: {
+  namedExports: {
     createESClient: () => ({ bulk: mockBulk }),
   },
 });
 
 let ddb2es: (options: {
   ddbStreamEvent: DynamoDBStreamEvent;
-  esOptions: object;
-  bulkOptions?: object;
+  esOptions: Record<string, unknown>;
+  bulkOptions?: Record<string, unknown>;
   forEachRecordToDocument?: (record: any) => { index: string; id: string };
 }) => Promise<void>;
 
@@ -115,4 +116,66 @@ test('uses custom forEachRecordToDocument for index and id', async () => {
 
   const [param] = mockBulk.mock.calls[0].arguments as any[];
   assert.deepStrictEqual(param.body[0], { index: { _index: 'custom-index', _id: 'custom-id' } });
+});
+
+test('handles MODIFY event and creates index operation with NewImage payload', async () => {
+  mockBulk.mock.resetCalls();
+
+  const event: DynamoDBStreamEvent = {
+    Records: [
+      {
+        eventName: 'MODIFY',
+        eventSourceARN: 'arn:aws:dynamodb:us-east-1:123456789:table/my-table/stream/2021-01-01T00:00:00.000',
+        dynamodb: {
+          Keys: { pk: { S: 'xyz' } },
+          NewImage: { pk: { S: 'xyz' }, message: { S: 'hello' } },
+        },
+      },
+    ],
+  };
+
+  await ddb2es({ ddbStreamEvent: event, esOptions: {} });
+
+  assert.strictEqual(mockBulk.mock.callCount(), 1);
+  const [param] = mockBulk.mock.calls[0].arguments as any[];
+  assert.deepStrictEqual(param.body[0], { index: { _index: 'my-table', _id: 'xyz' } });
+  assert.deepStrictEqual(param.body[1], { pk: 'xyz', message: 'hello' });
+});
+
+test('handles missing or undefined dynamodb properties gracefully', async () => {
+  mockBulk.mock.resetCalls();
+
+  const event: DynamoDBStreamEvent = {
+    Records: [
+      {
+        eventName: 'REMOVE',
+        eventSourceARN: 'arn:aws:dynamodb:us-east-1:123456789:table/my-table/stream/2021-01-01T00:00:00.000',
+        dynamodb: undefined,
+      },
+    ],
+  };
+
+  await ddb2es({ ddbStreamEvent: event, esOptions: {} });
+
+  assert.strictEqual(mockBulk.mock.callCount(), 1);
+  const [param] = mockBulk.mock.calls[0].arguments as any[];
+  assert.deepStrictEqual(param.body[0], { delete: { _index: 'my-table', _id: '' } });
+});
+
+test('applies custom bulk options to bulk parameters', async () => {
+  mockBulk.mock.resetCalls();
+
+  const event: DynamoDBStreamEvent = {
+    Records: [],
+  };
+
+  await ddb2es({
+    ddbStreamEvent: event,
+    esOptions: {},
+    bulkOptions: { refresh: 'wait_for' },
+  });
+
+  assert.strictEqual(mockBulk.mock.callCount(), 1);
+  const [param] = mockBulk.mock.calls[0].arguments as any[];
+  assert.strictEqual(param.refresh, 'wait_for');
 });
