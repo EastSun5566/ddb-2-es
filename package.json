@@ -3,6 +3,7 @@
   "version": "0.0.3",
   "description": "🚚 Load streaming data into Amazon ES from DynamoDB by Lambda with latest ES bulk API",
   "main": "dist/index.js",
+  "type": "module",
   "types": "dist/types/index.d.ts",
   "files": [
     "dist",
@@ -13,10 +14,10 @@
   },
   "scripts": {
     "build": "tsc",
-    "lint": "eslint --fix --ignore-path .gitignore --ext .js,.ts src",
-    "test": "tsx --experimental-test-module-mocks --test src/index.test.ts",
+    "lint": "oxlint",
+    "test": "node --experimental-strip-types --experimental-test-module-mocks --test src/index.test.ts",
     "prepublishOnly": "tsc",
-    "release": "yarn version && git push --follow-tags && yarn publish"
+    "release": "pnpm version && git push --follow-tags && pnpm publish"
   },
   "keywords": [
     "dynamodb",
@@ -33,24 +34,19 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn lint"
+      "pre-commit": "pnpm lint"
     }
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.70",
-    "@types/node": "^22.0.0",
-    "@typescript-eslint/eslint-plugin": "^4.13.0",
-    "@typescript-eslint/parser": "^4.13.0",
-    "eslint": "^7.18.0",
-    "eslint-config-airbnb-base": "^14.0.0",
-    "eslint-plugin-import": "^2.18.2",
-    "husky": "^4.3.8",
-    "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    "@types/aws-lambda": "^8.10.162",
+    "@types/node": "^26.1.1",
+    "husky": "^9.1.7",
+    "oxlint": "^1.73.0",
+    "typescript": "^7.0.2"
   },
   "dependencies": {
-    "@elastic/elasticsearch": "^7.10.0",
-    "aws-elasticsearch-connector": "^9.0.1",
-    "aws-sdk": "^2.828.0"
+    "@elastic/elasticsearch": "^9.4.2",
+    "aws-elasticsearch-connector": "^9.2.0",
+    "aws-sdk": "^2.1693.0"
   }
 }
