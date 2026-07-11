@@ -1,4 +1,4 @@
-/* eslint-disable import/no-unresolved, @typescript-eslint/no-explicit-any */
+/* eslint-disable import/no-unresolved */
 import { before, test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import type { DynamoDBStreamEvent } from 'aws-lambda';
@@ -16,7 +16,7 @@ let ddb2es: (options: {
   ddbStreamEvent: DynamoDBStreamEvent;
   esOptions: Record<string, unknown>;
   bulkOptions?: Record<string, unknown>;
-  forEachRecordToDocument?: (record: any) => { index: string; id: string };
+  forEachRecordToDocument?: (record: unknown) => { index: string; id: string };
 }) => Promise<void>;
 
 before(async () => {
@@ -42,7 +42,7 @@ test('handles INSERT event and creates index operation', async () => {
   await ddb2es({ ddbStreamEvent: event, esOptions: {} });
 
   assert.strictEqual(mockBulk.mock.callCount(), 1);
-  const [param] = mockBulk.mock.calls[0].arguments as any[];
+  const [param] = mockBulk.mock.calls[0].arguments as [{ operations: Record<string, unknown>[] } & Record<string, unknown>];
   assert.deepStrictEqual(param.operations[0], { index: { _index: 'my-table', _id: 'abc' } });
   assert.deepStrictEqual(param.operations[1], { pk: 'abc', count: 1 });
 });
@@ -65,7 +65,7 @@ test('handles REMOVE event and creates delete operation', async () => {
   await ddb2es({ ddbStreamEvent: event, esOptions: {} });
 
   assert.strictEqual(mockBulk.mock.callCount(), 1);
-  const [param] = mockBulk.mock.calls[0].arguments as any[];
+  const [param] = mockBulk.mock.calls[0].arguments as [{ operations: Record<string, unknown>[] } & Record<string, unknown>];
   assert.deepStrictEqual(param.operations[0], { delete: { _index: 'my-table', _id: 'abc' } });
   assert.strictEqual(param.operations.length, 1);
 });
@@ -114,7 +114,7 @@ test('uses custom forEachRecordToDocument for index and id', async () => {
     forEachRecordToDocument: () => ({ index: 'custom-index', id: 'custom-id' }),
   });
 
-  const [param] = mockBulk.mock.calls[0].arguments as any[];
+  const [param] = mockBulk.mock.calls[0].arguments as [{ operations: Record<string, unknown>[] } & Record<string, unknown>];
   assert.deepStrictEqual(param.operations[0], { index: { _index: 'custom-index', _id: 'custom-id' } });
 });
 
@@ -137,7 +137,7 @@ test('handles MODIFY event and creates index operation with NewImage payload', a
   await ddb2es({ ddbStreamEvent: event, esOptions: {} });
 
   assert.strictEqual(mockBulk.mock.callCount(), 1);
-  const [param] = mockBulk.mock.calls[0].arguments as any[];
+  const [param] = mockBulk.mock.calls[0].arguments as [{ operations: Record<string, unknown>[] } & Record<string, unknown>];
   assert.deepStrictEqual(param.operations[0], { index: { _index: 'my-table', _id: 'xyz' } });
   assert.deepStrictEqual(param.operations[1], { pk: 'xyz', message: 'hello' });
 });
@@ -158,7 +158,7 @@ test('handles missing or undefined dynamodb properties gracefully', async () => 
   await ddb2es({ ddbStreamEvent: event, esOptions: {} });
 
   assert.strictEqual(mockBulk.mock.callCount(), 1);
-  const [param] = mockBulk.mock.calls[0].arguments as any[];
+  const [param] = mockBulk.mock.calls[0].arguments as [{ operations: Record<string, unknown>[] } & Record<string, unknown>];
   assert.deepStrictEqual(param.operations[0], { delete: { _index: 'my-table', _id: '' } });
 });
 
@@ -176,6 +176,6 @@ test('applies custom bulk options to bulk parameters', async () => {
   });
 
   assert.strictEqual(mockBulk.mock.callCount(), 1);
-  const [param] = mockBulk.mock.calls[0].arguments as any[];
+  const [param] = mockBulk.mock.calls[0].arguments as [{ operations: Record<string, unknown>[], refresh?: string } & Record<string, unknown>];
   assert.strictEqual(param.refresh, 'wait_for');
 });

@@ -7,7 +7,7 @@ import createAwsElasticsearchConnector from 'aws-elasticsearch-connector';
 type ClientOptions = ConstructorParameters<typeof ESClient>[0];
 
 export const createESClient = (options: ClientOptions): ESClient => new ESClient({
-  ...((createAwsElasticsearchConnector as any)(AWS.Config)),
+  ...((createAwsElasticsearchConnector as unknown as (awsConfig: AWS.Config) => Record<string, unknown>)(AWS.config)),
   ...options,
 });
 

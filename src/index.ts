@@ -10,7 +10,7 @@ type ClientOptions = ConstructorParameters<typeof Client>[0];
 interface DDB2ESOptions {
   ddbStreamEvent: DynamoDBStreamEvent;
   esOptions: ClientOptions;
-  bulkOptions?: Record<string, any>;
+  bulkOptions?: Record<string, unknown>;
   forEachRecordToDocument?: (record: DynamoDBRecord) => { index: string; id: string };
 }
 
@@ -22,7 +22,7 @@ export const ddb2es = async ({
 }: DDB2ESOptions): Promise<void> => {
   const es = createESClient(esOptions);
 
-  const bulkParam: Record<string, any> = {
+  const bulkParam: Record<string, unknown> = {
     operations: ddbStreamEvent.Records
       .flatMap((record) => {
         const keys = AWS.DynamoDB.Converter.unmarshall((record.dynamodb && record.dynamodb.Keys) || {});
