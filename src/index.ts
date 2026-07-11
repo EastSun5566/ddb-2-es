@@ -1,14 +1,16 @@
-import dynamodb from 'aws-sdk/clients/dynamodb';
+import AWS from 'aws-sdk';
 // eslint-disable-next-line import/no-unresolved
-import { DynamoDBStreamEvent, DynamoDBRecord } from 'aws-lambda';
-import { ClientOptions, RequestParams } from '@elastic/elasticsearch';
+import type { DynamoDBStreamEvent, DynamoDBRecord } from 'aws-lambda';
+import { Client } from '@elastic/elasticsearch';
 
-import { createESClient } from './es';
+import { createESClient } from './es.ts';
+
+type ClientOptions = ConstructorParameters<typeof Client>[0];
 
 interface DDB2ESOptions {
   ddbStreamEvent: DynamoDBStreamEvent;
   esOptions: ClientOptions;
-  bulkOptions?: RequestParams.Bulk;
+  bulkOptions?: Record<string, unknown>;
   forEachRecordToDocument?: (record: DynamoDBRecord) => { index: string; id: string };
 }
 
@@ -20,10 +22,10 @@ export const ddb2es = async ({
 }: DDB2ESOptions): Promise<void> => {
   const es = createESClient(esOptions);
 
-  const bulkParam: RequestParams.Bulk = {
-    body: ddbStreamEvent.Records
+  const bulkParam: Record<string, unknown> = {
+    operations: ddbStreamEvent.Records
       .flatMap((record) => {
-        const keys = dynamodb.Converter.unmarshall((record.dynamodb && record.dynamodb.Keys) || {});
+        const keys = AWS.DynamoDB.Converter.unmarshall((record.dynamodb && record.dynamodb.Keys) || {});
         const {
           id = Object.values(keys).join(''),
           index = record.eventSourceARN && record.eventSourceARN.split('/')[1].toLowerCase(),
@@ -47,14 +49,14 @@ export const ddb2es = async ({
               _id: id,
             },
           },
-          dynamodb.Converter.unmarshall((record.dynamodb && record.dynamodb.NewImage) || {}),
+          AWS.DynamoDB.Converter.unmarshall((record.dynamodb && record.dynamodb.NewImage) || {}),
         ];
       }),
     ...bulkOptions,
   };
 
-  const { body: bulkResponse } = await es.bulk(bulkParam);
-  if (bulkResponse.errors) throw new Error(bulkResponse.errors);
+  const bulkResponse = await es.bulk(bulkParam);
+  if (bulkResponse.errors) throw new Error('Bulk request encountered errors');
 };
 
 export default ddb2es;
