@@ -15,7 +15,7 @@
   "scripts": {
     "build": "tsc",
     "lint": "oxlint",
-    "test": "node --experimental-strip-types --experimental-test-module-mocks --test src/index.test.ts",
+    "test": "node --experimental-strip-types --experimental-test-module-mocks --test tests/index.test.ts",
     "prepublishOnly": "tsc",
     "release": "pnpm version && git push --follow-tags && pnpm publish"
   },
