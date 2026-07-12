@@ -28,7 +28,7 @@ export const ddb2es = async ({
         const keys = AWS.DynamoDB.Converter.unmarshall((record.dynamodb && record.dynamodb.Keys) || {});
         const {
           id = Object.values(keys).join(''),
-          index = record.eventSourceARN && record.eventSourceARN.split('/')[1].toLowerCase(),
+          index = record.eventSourceARN && record.eventSourceARN.split('/')[1]?.toLowerCase(),
         } = (forEachRecordToDocument && forEachRecordToDocument(record)) || {};
 
         if (record.eventName === 'REMOVE') {

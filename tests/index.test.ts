@@ -5,22 +5,27 @@ import type { DynamoDBStreamEvent } from 'aws-lambda';
 
 const mockBulk = mock.fn(async () => ({ errors: false }));
 
-// Mock ./es.ts before ./index.ts is loaded so createESClient is replaced
-mock.module('./es.ts', {
-  namedExports: {
-    createESClient: () => ({ bulk: mockBulk }),
-  },
-});
-
 let ddb2es: (options: {
   ddbStreamEvent: DynamoDBStreamEvent;
   esOptions: Record<string, unknown>;
   bulkOptions?: Record<string, unknown>;
-  forEachRecordToDocument?: (record: unknown) => { index: string; id: string };
+  forEachRecordToDocument?: (record: any) => { index?: string; id?: string };
 }) => Promise<void>;
 
+let mockCreateESClientOpts: Record<string, unknown> | null = null;
+
+// Mock ../src/es.ts before ../src/index.ts is loaded so createESClient is replaced
+mock.module('../src/es.ts', {
+  namedExports: {
+    createESClient: (opts: Record<string, unknown>) => {
+      mockCreateESClientOpts = opts;
+      return { bulk: mockBulk };
+    },
+  },
+});
+
 before(async () => {
-  ({ ddb2es } = await import('./index.ts'));
+  ({ ddb2es } = await import('../src/index.ts'));
 });
 
 test('handles INSERT event and creates index operation', async () => {
@@ -178,4 +183,116 @@ test('applies custom bulk options to bulk parameters', async () => {
   assert.strictEqual(mockBulk.mock.callCount(), 1);
   const [param] = mockBulk.mock.calls[0].arguments as [{ operations: Record<string, unknown>[], refresh?: string } & Record<string, unknown>];
   assert.strictEqual(param.refresh, 'wait_for');
+});
+
+test('passes esOptions correctly to createESClient', async () => {
+  mockCreateESClientOpts = null;
+  const esOptions = { node: 'https://example.com', maxRetries: 3 };
+
+  await ddb2es({
+    ddbStreamEvent: { Records: [] },
+    esOptions,
+  });
+
+  assert.deepStrictEqual(mockCreateESClientOpts, esOptions);
+});
+
+test('handles composite/multiple DynamoDB Keys and joins them with standard delimiter or empty string', async () => {
+  mockBulk.mock.resetCalls();
+
+  const event: DynamoDBStreamEvent = {
+    Records: [
+      {
+        eventName: 'INSERT',
+        eventSourceARN: 'arn:aws:dynamodb:us-east-1:123456789:table/my-table/stream/2021-01-01T00:00:00.000',
+        dynamodb: {
+          Keys: { pk: { S: 'partition' }, sk: { S: 'sort' } },
+          NewImage: { pk: { S: 'partition' }, sk: { S: 'sort' }, text: { S: 'hello' } },
+        },
+      },
+    ],
+  };
+
+  await ddb2es({ ddbStreamEvent: event, esOptions: {} });
+
+  assert.strictEqual(mockBulk.mock.callCount(), 1);
+  const [param] = mockBulk.mock.calls[0].arguments as [{ operations: Record<string, unknown>[] } & Record<string, unknown>];
+  // Standard implementation is Object.values(keys).join('')
+  assert.deepStrictEqual(param.operations[0], { index: { _index: 'my-table', _id: 'partitionsort' } });
+});
+
+test('handles mixed INSERT and REMOVE events in a single batch', async () => {
+  mockBulk.mock.resetCalls();
+
+  const event: DynamoDBStreamEvent = {
+    Records: [
+      {
+        eventName: 'INSERT',
+        eventSourceARN: 'arn:aws:dynamodb:us-east-1:123456789:table/my-table/stream/2021-01-01T00:00:00.000',
+        dynamodb: {
+          Keys: { pk: { S: 'id-1' } },
+          NewImage: { pk: { S: 'id-1' }, value: { S: 'inserted' } },
+        },
+      },
+      {
+        eventName: 'REMOVE',
+        eventSourceARN: 'arn:aws:dynamodb:us-east-1:123456789:table/my-table/stream/2021-01-01T00:00:00.000',
+        dynamodb: {
+          Keys: { pk: { S: 'id-2' } },
+        },
+      },
+    ],
+  };
+
+  await ddb2es({ ddbStreamEvent: event, esOptions: {} });
+
+  assert.strictEqual(mockBulk.mock.callCount(), 1);
+  const [param] = mockBulk.mock.calls[0].arguments as [{ operations: Record<string, unknown>[] } & Record<string, unknown>];
+
+  // The first record: index op + payload
+  assert.deepStrictEqual(param.operations[0], { index: { _index: 'my-table', _id: 'id-1' } });
+  assert.deepStrictEqual(param.operations[1], { pk: 'id-1', value: 'inserted' });
+
+  // The second record: delete op
+  assert.deepStrictEqual(param.operations[2], { delete: { _index: 'my-table', _id: 'id-2' } });
+  assert.strictEqual(param.operations.length, 3);
+});
+
+test('handles missing or malformed eventSourceARN gracefully', async () => {
+  mockBulk.mock.resetCalls();
+
+  const event: DynamoDBStreamEvent = {
+    Records: [
+      {
+        eventName: 'INSERT',
+        eventSourceARN: undefined,
+        dynamodb: {
+          Keys: { pk: { S: 'id-1' } },
+          NewImage: { pk: { S: 'id-1' } },
+        },
+      },
+      {
+        eventName: 'REMOVE',
+        eventSourceARN: 'invalid-arn-format',
+        dynamodb: {
+          Keys: { pk: { S: 'id-2' } },
+        },
+      },
+    ],
+  };
+
+  await ddb2es({ ddbStreamEvent: event, esOptions: {} });
+
+  assert.strictEqual(mockBulk.mock.callCount(), 1);
+  const [param] = mockBulk.mock.calls[0].arguments as [{ operations: Record<string, unknown>[] } & Record<string, unknown>];
+
+  // Under undefined eventSourceARN, splitting of undefined or missing throws or falls back.
+  // Let's verify standard behavior:
+  // record.eventSourceARN && record.eventSourceARN.split('/')[1].toLowerCase()
+  // Since undefined falsy -> standard fallback in JS logic, index is undefined unless custom logic handled.
+  // Wait, let's see how ddb2es handles it:
+  // index = record.eventSourceARN && record.eventSourceARN.split('/')[1].toLowerCase()
+  // If undefined, index is undefined. We should check if that translates to undefined in bulk operations.
+  assert.strictEqual(param.operations[0].index._index, undefined);
+  assert.strictEqual(param.operations[2].delete._index, undefined); // 'invalid-arn-format'.split('/')[1] is undefined
 });
